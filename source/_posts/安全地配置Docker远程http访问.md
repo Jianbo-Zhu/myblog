@@ -9,7 +9,7 @@ tags:
 category: 配置管理
 ---
 ### 启用Docker远程http接口
-默认情况下，Docker守护进程Unix socket（/var/run/docker.sock）来进行本地进程通信，而不会监听任何端口，因此只能在本地使用docker客户端或者使用Docker API进行操作。如果想在其他主机上操作Docker主机，就需要让Docker守护进程打开一个HTTP Socket，这样才能实现远程通信。
+默认情况下，Docker守护进程通过Unix socket（/var/run/docker.sock）来进行本地进程通信，而不会监听任何端口，因此只能在本地使用docker客户端或者使用Docker API进行操作。如果想在其他主机上操作Docker主机，就需要让Docker守护进程打开一个HTTP Socket，这样才能实现远程通信。
 编辑docker的配置文件/etc/default/docker修改DOCKER_OPTS成
 ```
 #同时监听本地unix socket和远程http socket（2376）
@@ -19,14 +19,14 @@ DOCKER_OPTS="-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2376"
 ```
 sudo service docker restart
 ```
-至此如果服务器启用了防火墙，只要把2376端口开放既可以在其他主机访问本docker实例了。
+至此如果服务器启用了防火墙，只要把2376端口开放既可以在其他主机访问本docker主机了。
 例如：
 ```
 DOCKER_HOST=$host:2376 docker ps
 ```
 
 ### 启用TLS
-但是目前位置所有知道该docker主机地址和端口的人都可以访问，显然这是个大问题。接下来我们启用TLS证书来保护该docker实例，我们自己会成为证书颁发机构(CA)，同时生成服务器端的证书和客户端用于认证的证书。首先我们生成作为证书颁发机构用于签发证书的私钥和公钥。
+但是目前位置所有知道该docker主机地址和端口的人都可以访问，显然这是个大问题。接下来我们启用TLS证书来保护该docker主机，我们自己会成为证书颁发机构(CA)，同时生成服务器端的证书和客户端用于认证的证书。首先我们生成作为证书颁发机构用于签发证书的私钥和公钥。
 ```
 # openssl genrsa -aes256 -out ca-key.pem 4096
 Generating RSA private key, 4096 bit long modulus
@@ -86,7 +86,7 @@ Enter pass phrase for ca-key.pem:
 ```
 DOCKER_OPTS="-H unix:///var/run/docker.sock --tlsverify --tlscacert=/etc/default/docker.d/ca.pem --tlscert=/etc/default/docker.d/server-cert.pem --tlskey=/etc/default/docker.d/server-key.pem -H tcp://0.0.0.0:2376"
 ```
-现在我们尝试通过远程接口访问docker守护进程，我们看到了一个TLS有关的错误（如下所示），说明我们的保护已经生效了，必须自己人（经认证的客户端）才可以访问。
+现在我们尝试通过远程接口访问docker主机，我们看到了一个TLS有关的错误（如下所示），说明我们的保护已经生效了，必须自己人（经认证的客户端）才可以访问。
 ```
 # DOCKER_HOST=www.zjbonline.com:2376 docker ps
 Get http://www.zjbonline.com:2376/v1.21/containers/json: malformed HTTP response "\x15\x03\x01\x00\x02\x02".
